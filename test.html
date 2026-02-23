@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For You Only ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Fredericka+the+Great&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* =========================================
+           CSS GIAO DIỆN CHUNG & CÁC TRANG CƠ BẢN
+           ========================================= */
+        body { margin: 0; padding: 0; font-family: 'Nunito', sans-serif; background-color: #ffe6e6; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; transition: background-color 2s ease; }
+        
+        #heart-monitor { position: fixed; bottom: 20px; right: 30px; text-align: center; z-index: 1000; transition: filter 2s ease; }
+        .heart { font-size: 40px; animation: heartbeat 1s infinite; text-shadow: 0 0 10px rgba(255, 0, 0, 0.5); margin-bottom: 5px; }
+        #bpm-display { font-size: 16px; color: #d63031; font-weight: bold; font-family: 'Courier New', Courier, monospace; transition: color 2s ease; }
+        @keyframes heartbeat { 0% { transform: scale(1); } 15% { transform: scale(1.2); } 30% { transform: scale(1); } 45% { transform: scale(1.2); } 60% { transform: scale(1); } 100% { transform: scale(1); } }
+        
+        /* Trạng thái tim khi bị từ chối */
+        #heart-monitor.sad .heart { animation: heartbeat 2s infinite; text-shadow: 0 0 10px rgba(100, 100, 100, 0.5); filter: grayscale(60%); }
+        #heart-monitor.sad #bpm-display { color: #555; }
+
+        #user-profile { position: fixed; top: 20px; right: 20px; display: none; align-items: center; background: rgba(255, 255, 255, 0.9); padding: 5px 15px 5px 5px; border-radius: 40px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; z-index: 1000; border: 2px solid #ffcccc; transition: 0.3s; }
+        #user-profile:hover { box-shadow: 0 4px 15px rgba(255,77,77,0.3); transform: scale(1.02); background: white; }
+        .avatar-wrapper { position: relative; width: 50px; height: 50px; margin-right: 10px; display: flex; justify-content: center; align-items: center; }
+        #user-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
+        #avatar-frame { position: absolute; top: -12px; left: -12px; width: 74px; height: 74px; pointer-events: none; z-index: 2; }
+        .user-name { font-weight: bold; color: #ff4d4d; font-size: 14px; }
+        .user-title { font-size: 10px; color: #888; margin-top: 2px; }
+        
+        #profile-dropdown { position: absolute; top: 65px; right: 0; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); border: 2px dashed #ffcccc; display: none; width: 220px; transform-origin: top right; animation: popOut 0.2s ease-out forwards; }
+        #profile-dropdown.show { display: block; }
+        #profile-dropdown p { margin: 5px 0; font-size: 13px; color: #555; }
+        #current-status { color: #ff4d4d; font-weight: bold; font-size: 16px !important; margin-top: 5px !important;}
+        @keyframes popOut { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
+
+        .page { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+        .page.active { display: flex; }
+        
+        .box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; border: 2px dashed #ffb3b3; max-width: 450px; width: 90%; max-height: 90vh; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; box-sizing: border-box; }
+        .box h2 { color: #ff4d4d; margin-top: 0; margin-bottom: 20px; }
+        
+        /* =========================================
+           CSS TRANG 1 & CAPTCHA
+           ========================================= */
+        .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; width: 100%; box-sizing: border-box; }
+        .input-group input { padding: 12px; border: 2px solid #ffcccc; border-radius: 8px; outline: none; font-size: 14px; width: 100%; box-sizing: border-box; }
+        .input-group input:focus { border-color: #ff4d4d; }
+        
+        .question-container { text-align: left; margin-bottom: 20px; background: #fff5f5; padding: 15px; border-radius: 8px; border: 1px solid #ffcccc; width: 100%; box-sizing: border-box;}
+        .question-container p { font-weight: bold; font-size: 14px; color: #333; margin-top: 0; margin-bottom: 10px; }
+        .question-container label { display: block; margin-bottom: 8px; cursor: pointer; font-size: 14px; color: #555; }
+
+        .captcha-container { display: flex; align-items: center; justify-content: space-between; background-color: #f9f9f9; border: 1px solid #d3d3d3; border-radius: 3px; padding: 10px 15px; box-shadow: 0px 0px 4px rgba(0,0,0,0.1); cursor: pointer; margin: 0 auto 20px auto; transition: 0.3s; width: 100%; max-width: 280px; box-sizing: border-box; }
+        .captcha-container:hover { box-shadow: 0px 0px 8px rgba(0,0,0,0.2); }
+        .captcha-left { display: flex; align-items: center; }
+        .captcha-checkbox { width: 28px; height: 28px; background: #fff; border: 2px solid #c1c1c1; border-radius: 2px; margin-right: 15px; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; color: #ff4d4d; transition: 0.2s; box-sizing: border-box; }
+        .captcha-checkbox.checked { border-color: #c1c1c1; }
+        .captcha-checkbox.checked::after { content: '✔'; }
+        .captcha-text { font-size: 14px; color: #333; }
+        .captcha-right { display: flex; flex-direction: column; align-items: center; margin-left: 10px; }
+        .captcha-logo { font-size: 24px; line-height: 1; }
+        .captcha-brand { font-size: 10px; color: #555; margin-top: 5px; font-weight: bold; }
+        .captcha-sub { font-size: 8px; color: #999; }
+        
+        .login-btn { background-color: #ff4d4d; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; box-sizing: border-box; }
+        .login-btn:hover:not(:disabled) { background-color: #e60000; transform: scale(1.02); }
+        .login-btn:disabled { background-color: #ff9999; cursor: not-allowed; }
+        .main-error { color: red; font-size: 14px; font-weight: bold; margin-top: 15px; min-height: 20px; }
+
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 1500; display: none; }
+        #recap-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background: white; z-index: 2000; width: 350px; max-width: 90%; border-radius: 3px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: none; flex-direction: column; opacity: 0; transition: 0.2s ease-in-out; box-sizing: border-box; }
+        #recap-modal.active { display: flex; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .recap-header { background: #1a73e8; color: white; padding: 20px; text-align: left; }
+        .recap-header span { font-size: 14px; }
+        .recap-header strong { display: block; font-size: 22px; margin-top: 5px; margin-bottom: 5px; }
+        .recap-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 10px; background: white; }
+        .recap-tile { aspect-ratio: 1; border: 2px solid #eee; display: flex; justify-content: center; align-items: center; font-size: 36px; font-weight: bold; color: #555; cursor: pointer; position: relative; transition: 0.1s; }
+        .recap-tile:nth-child(even) { background: linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%); }
+        .recap-tile:nth-child(3n) { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); }
+        .recap-tile.selected { transform: scale(0.9); border-color: #1a73e8; }
+        .order-badge { position: absolute; top: -5px; right: -5px; background: #1a73e8; color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; display: flex; justify-content: center; align-items: center; z-index: 10; }
+        .recap-footer { padding: 15px; border-top: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        .recap-error { color: #d93025; font-size: 13px; font-weight: bold; }
+        .recap-btn { background: #1a73e8; color: white; border: none; padding: 10px 25px; font-size: 14px; font-weight: bold; border-radius: 3px; cursor: pointer; }
+
+        /* =========================================
+           CSS TRẠM LOADING (DÙNG CHO CẢ 2 CHẶNG)
+           ========================================= */
+        #loading-page h2 { color: #ff4d4d; font-size: 28px; margin-bottom: 70px; text-align: center; } 
+        .progress-wrapper { position: relative; width: 100%; max-width: 380px; height: 30px; border: 4px solid #ff4d4d; border-radius: 20px; background: white; margin-bottom: 30px; box-sizing: border-box; }
+        .progress-fill-background { position: absolute; top: 0; left: 0; height: 100%; background-color: #ff4d4d; width: 0%; transition: width 0.3s ease-out; z-index: 0; border-radius: 15px; }
+        .safe-track { position: absolute; top: 0; left: 20px; right: 20px; height: 100%; z-index: 10; }
+        #progress-percent { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 15px; font-weight: bold; color: #ff4d4d; pointer-events: none; transition: color 0.3s; z-index: 5; }
+        #mail-cart { position: absolute; top: -38px; left: 0%; font-size: 35px; transform: translateX(-50%) scaleX(-1); transition: left 0.3s ease-out; z-index: 15; }
+        .milestone-2 { position: absolute; top: -45px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; width: 80px; transition: 0.5s ease-out;}
+        .chibi-rock { font-size: 32px; animation: bounce 2s infinite; } 
+        .milestone-label { font-size: 14px; color: #ff4d4d; font-weight: bold; margin-top: 42px; white-space: nowrap;}
+        .milestone-3 { position: absolute; top: -45px; left: 100%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; width: 80px; }
+        .heart-icon { font-size: 32px; } 
+        #loading-text { color: #ff4d4d; font-weight: bold; font-size: 16px; letter-spacing: 2px; margin-top: 20px; min-height: 25px; text-align: center;}
+        
+        .drive-btn { padding: 15px 30px; background-color: #ff4d4d; color: white; border: none; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(255, 77, 77, 0.3); transition: 0.1s; position: relative; z-index: 50; margin-top: 20px;}
+        .drive-btn:active { transform: scale(0.95); }
+        #continue-journey-btn { display: none; }
+
+        .floating-letter { position: absolute; font-size: 26px; font-weight: bold; color: white; display: flex; justify-content: center; align-items: center; animation: floatUp 1.5s ease-out forwards; z-index: 100; width: 60px; height: 60px; pointer-events: none; }
+        .floating-letter::before { content: '❤️'; position: absolute; font-size: 50px; z-index: -1; }
+        .floating-letter span { position: relative; top: -2px; z-index: 1; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 100% { opacity: 0; transform: translateY(-100px) scale(1.2); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        /* =========================================
+           CSS TRANG 2 (GÕ CHỮ CHỮA LÀNH)
+           ========================================= */
+        .typing-wrapper { min-height: 120px; display: flex; align-items: center; justify-content: center; width: 100%; }
+        .text-container { text-align: center; }
+        #typing-content { font-size: 20px; line-height: 1.6; color: #d63031; font-weight: bold; }
+        #cursor { font-size: 22px; color: #d63031; font-weight: normal; animation: blink 0.7s infinite; display: inline-block; margin-left: 2px; }
+
+        #final-question { display: none; color: #d63031; font-weight: bold; font-size: 22px; margin-bottom: 20px; animation: fadeIn 1s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #button-container { display: none; margin-top: 10px; width: 100%; text-align: center; position: relative; }
+        .action-btn-p2 { padding: 15px 25px; border: none; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; display: inline-block; margin: 5px 10px; white-space: nowrap; }
+        #btn-yes-p2 { background-color: #ff4d4d; color: white; box-shadow: 0 4px 10px rgba(255, 77, 77, 0.3); }
+        #btn-yes-p2:hover { background-color: #e60000; transform: scale(1.05); }
+        #btn-no-p2 { background-color: #f1f2f6; color: #555; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); z-index: 2000; }
+        #tease-text-p2 { display: none; color: #e84118; font-weight: bold; font-style: italic; font-size: 15px; margin-top: 15px; animation: shake 0.5s ease-in-out; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } }
+
+        /* =========================================
+           CSS TRANG 3 (PHONG BÌ & TỜ GIẤY TỎ TÌNH)
+           ========================================= */
+        #header-text-p3 { text-align: center; margin-bottom: 40px; transition: opacity 0.5s ease-out; }
+        .sketch-font { font-family: 'Fredericka the Great', cursive; color: #d63031; font-size: 55px; margin: 0; line-height: 1.2; letter-spacing: 2px; }
+        
+        .envelope-wrapper { position: relative; width: 300px; height: 180px; cursor: pointer; animation: floatEnvelope 3s ease-in-out infinite; margin-bottom: 30px; }
+        .envelope-wrapper:hover { transform: scale(1.05); animation-play-state: paused; }
+        @keyframes floatEnvelope { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        .env-part { transition: opacity 0.5s ease-out; }
+        .fade-out { opacity: 0 !important; pointer-events: none; }
+
+        .envelope-back { position: absolute; width: 100%; height: 100%; background-color: #f3a683; border-radius: 5px; box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+        .flap { position: absolute; top: 0; left: 0; width: 0; height: 0; border-left: 150px solid transparent; border-right: 150px solid transparent; border-top: 100px solid #e77f67; transform-origin: top; transition: transform 0.5s ease-in-out, z-index 0s 0.25s, opacity 0.5s; z-index: 4; }
+        .heart-seal { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 28px; color: #c0392b; text-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 5; }
+        .envelope-front { position: absolute; bottom: 0; left: 0; width: 0; height: 0; border-left: 150px solid #f7d794; border-right: 150px solid #f7d794; border-bottom: 110px solid #f19066; border-top: 70px solid transparent; border-radius: 0 0 5px 5px; z-index: 3; pointer-events: none; }
+
+        #small-letter { position: absolute; bottom: 10px; left: 10px; right: 10px; height: 160px; background-color: #fffcf9; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: transform 0.6s ease-in-out 0.2s, opacity 0.5s; z-index: 2;}
+
+        .envelope-wrapper.open { animation: none; cursor: default; transform: none !important; }
+        .envelope-wrapper.open .flap { transform: rotateX(180deg); z-index: 1; }
+        .envelope-wrapper.open #small-letter { transform: translateY(-80px); z-index: 5; }
+
+        /* Tờ giấy khổng lồ */
+        #fullscreen-letter-wrapper { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.5s ease-in-out; }
+        #fullscreen-letter-wrapper.show { opacity: 1; pointer-events: auto; }
+
+        #big-letter {
+            width: 90vw; max-width: 550px; height: 85vh; max-height: 750px;
+            background-color: #fffcf9; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            padding: 35px 30px 100px 30px; box-sizing: border-box;
+            background-image: repeating-linear-gradient(transparent, transparent 34px, #d1d8e0 35px); background-attachment: local;
+            transform: scale(0.5) translateY(150px); transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            overflow-y: auto; overflow-x: hidden; scroll-behavior: smooth;
+        }
+        #fullscreen-letter-wrapper.show #big-letter { transform: scale(1) translateY(0); }
+
+        .letter-content { font-family: 'Caveat', cursive; font-size: 26px; color: #2d3436; line-height: 35px; text-align: left; width: 100%; min-height: 100%; outline: none; margin-top: -6px; }
+        .typing-cursor::after { content: '|'; animation: blink 0.7s infinite; color: #2d3436; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* Hai nút Đồng ý / Từ chối (Bản hiền lành) */
+        #final-decision { display: none; position: absolute; bottom: 30px; left: 0; width: 100%; justify-content: center; align-items: center; gap: 20px; z-index: 4000; }
+        .btn-love { padding: 12px 25px; border: none; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: 'Nunito', sans-serif; white-space: nowrap; }
+        #btn-yes-love { background-color: #ff4d4d; color: white; box-shadow: 0 4px 10px rgba(255, 77, 77, 0.3); }
+        #btn-yes-love:hover { background-color: #e60000; transform: scale(1.05); }
+        #btn-no-love { background-color: #f1f2f6; color: #555; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+        #btn-no-love:hover { background-color: #dfe4ea; transform: scale(0.95); }
+
+        /* =========================================
+           CSS TRANG TỪ CHỐI & ĐỒNG Ý
+           ========================================= */
+        #page-reject, #page-accept { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; z-index: 5000; position: absolute; top:0; left:0;}
+        #page-reject.active, #page-accept.active { display: flex; }
+        
+        .box-container {
+            background: white; padding: 40px 30px; border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); max-width: 500px; width: 85%;
+            font-family: 'Nunito', sans-serif; color: #555; line-height: 1.8;
+            font-size: 16px; text-align: left; opacity: 0; transform: translateY(20px);
+            animation: gentleFadeIn 1s ease-out forwards;
+        }
+        #page-accept .box-container { border: 2px dashed #ffcccc; color: #333; box-shadow: 0 10px 30px rgba(255, 77, 77, 0.15);}
+
+        @keyframes gentleFadeIn { to { opacity: 1; transform: translateY(0); } }
+
+        .btn-facebook { display: none; margin-top: 30px; padding: 12px 0; width: 100%; background-color: #0984e3; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; transition: 0.3s; box-sizing: border-box; box-shadow: 0 4px 10px rgba(9, 132, 227, 0.3); }
+        .btn-facebook:hover { background-color: #076bbb; transform: scale(1.02); }
+        #btn-facebook-accept { background-color: #ff4d4d; box-shadow: 0 4px 10px rgba(255, 77, 77, 0.3); }
+        #btn-facebook-accept:hover { background-color: #e60000; }
+
+        .highlight-fb { color: #0984e3; font-weight: bold; font-size: 14px; font-style: italic;}
+        .highlight-accept { color: #ff4d4d; font-weight: bold; font-size: 14px; font-style: italic; text-align: center; margin-bottom: 15px;}
+
+        #crush-reason { width: 100%; height: 80px; padding: 12px; border: 2px solid #ffcccc; border-radius: 8px; font-family: 'Nunito', sans-serif; font-size: 15px; outline: none; box-sizing: border-box; resize: none; margin-bottom: 10px; margin-top: 20px; transition: 0.3s; }
+        #crush-reason:focus { border-color: #ff4d4d; box-shadow: 0 0 5px rgba(255, 77, 77, 0.3);}
+
+        .heart-firework { position: fixed; font-size: 30px; pointer-events: none; animation: flyUp 2s ease-out forwards; z-index: 9999; }
+        @keyframes flyUp { 0% { transform: translateY(0) scale(0.5); opacity: 1; } 100% { transform: translateY(-400px) scale(1.5) rotate(45deg); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <audio id="cute-sound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3" preload="auto"></audio>
+    <audio id="type-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8b82ec4f1.mp3" preload="auto"></audio>
+    <audio id="paper-sound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3" preload="auto"></audio>
+    
+    <audio id="my-custom-bgm" src="nhac.mp3" loop preload="auto"></audio>
+
+    <div id="heart-monitor"><div class="heart" id="beating-heart">❤️</div><div id="bpm-display">85</div></div>
+
+    <div id="user-profile" onclick="toggleProfile()">
+        <div class="avatar-wrapper">
+            <img src="avt_nhi.jpg" alt="Avatar" id="user-avatar" onerror="this.src='https://i.imgur.com/Kz8jDk6.png'">
+            <img src="khung_gau.png" alt="Frame" id="avatar-frame" onerror="this.style.display='none'">
+        </div>
+        <div class="user-info">
+            <div class="user-name">Đoàn Yến Nhi</div>
+            <div class="user-title">Khách mời VIP 👑</div>
+        </div>
+        <div id="profile-dropdown">
+            <p><strong>Thông tin bảo mật:</strong></p>
+            <p>Danh phận hiện tại:</p>
+            <p id="current-status">Crush siêu dễ thương 🥰</p>
+        </div>
+    </div>
+
+    <div id="overlay" onclick="closeModal()"></div>
+    <div id="recap-modal">
+        <div class="recap-header">
+            <span>Chọn các hình ảnh theo thứ tự để tạo thành mã:</span>
+            <strong>Anh hay gọi em là gì nhỉ?</strong><span>(Bấm vào các ô số)</span>
+        </div>
+        <div class="recap-grid" id="tile-grid">
+            <div class="recap-tile" data-val="7" onclick="toggleTile(this)">7</div>
+            <div class="recap-tile" data-val="2" onclick="toggleTile(this)">2</div>
+            <div class="recap-tile" data-val="5" onclick="toggleTile(this)">5</div>
+            <div class="recap-tile" data-val="9" onclick="toggleTile(this)">9</div>
+            <div class="recap-tile" data-val="1" onclick="toggleTile(this)">1</div>
+            <div class="recap-tile" data-val="8" onclick="toggleTile(this)">8</div>
+            <div class="recap-tile" data-val="4" onclick="toggleTile(this)">4</div>
+            <div class="recap-tile" data-val="3" onclick="toggleTile(this)">3</div>
+            <div class="recap-tile" data-val="6" onclick="toggleTile(this)">6</div>
+        </div>
+        <div class="recap-footer"><div class="recap-error" id="recap-error"></div><button class="recap-btn" onclick="verifyImageCaptcha()">Xác minh</button></div>
+    </div>
+
+    <div id="page1" class="page active">
+        <div class="box">
+            <h2>Cổng Bảo Mật 🔒</h2>
+            <div class="input-group">
+                <input type="text" id="username" placeholder="Tài khoản">
+                <input type="password" id="password" placeholder="Mật khẩu">
+            </div>
+            <div class="question-container">
+                <p>Câu hỏi phụ: Nhi có thích ăn tiết khi ăn bún riêu không?</p>
+                <label><input type="radio" name="bunrieu" value="co"> Có</label>
+                <label><input type="radio" name="bunrieu" value="khong"> Không</label>
+                <label><input type="radio" name="bunrieu" value="khongbiet"> Không biết</label>
+            </div>
+            <div class="captcha-container" id="captcha-box" onclick="showImageCaptcha()">
+                <div class="captcha-left"><div class="captcha-checkbox" id="captcha-checkbox"></div><span class="captcha-text">Tui là Nhi siu cutee</span></div>
+                <div class="captcha-right"><div class="captcha-logo">💞</div><div class="captcha-brand">LovveCAPTCHA</div><div class="captcha-sub">Love - Forrervvs</div></div>
+            </div>
+            <button class="login-btn" id="login-btn" onclick="checkLogin()"><span id="btn-text">Đăng Nhập</span></button>
+            <div id="main-error" class="main-error"></div>
+        </div>
+    </div>
+
+    <div id="loading-page" class="page">
+        <h2>Trạm trung chuyển 💌</h2>
+        <div class="progress-wrapper">
+            <div class="progress-fill-background" id="progress-fill"></div>
+            <div id="progress-percent">0%</div>
+            <div class="safe-track">
+                <div id="mail-cart">🚚</div>
+                <div class="milestone-2" id="milestone-rock"><div class="chibi-rock" id="obstacle">❓</div><div class="milestone-label">Trạm 2</div></div>
+                <div class="milestone-3"><div class="heart-icon">💖</div><div class="milestone-label">Trạm 3</div></div>
+            </div>
+        </div>
+        <p id="loading-text">Bấm nút để xe chạy nha!</p>
+        <button id="start-journey-btn" class="drive-btn" onclick="stepJourneyPhase1()">Đạp ga tiến tới 🚀</button>
+        <button id="continue-journey-btn" class="drive-btn" onclick="stepJourneyPhase2()">Đạp ga tiếp nào 🚀</button>
+        <div id="floating-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none;"></div>
+    </div>
+
+    <div id="page2" class="page">
+        <div class="box">
+            <div class="typing-wrapper">
+                <div class="text-container">
+                    <span id="typing-content"></span><span id="cursor">|</span>
+                </div>
+            </div>
+            <div id="final-question">Vậy... Nhi đồng ý nán lại 10 phút cùng anh nhé? 🥺👉👈</div>
+            <div id="tease-text-p2">Đã bảo là đọc tiếp mà lị! Nghỉ ngơi xíu thôi 😝</div>
+            <div id="button-container">
+                <button id="btn-yes-p2" class="action-btn-p2" onclick="resumeJourney()">Dạ, em đồng ý 🥰</button>
+                <button id="btn-no-p2" class="action-btn-p2">Buồn ngủ quá, chối</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page3" class="page">
+        <div id="header-text-p3" class="header-text">
+            <h1 class="sketch-font">Hey Crush ...<br>Mở lá thư này ra nhé!</h1>
+        </div>
+        <div class="envelope-wrapper" id="envelope" onclick="openLetter()">
+            <div class="envelope-back env-part"></div>
+            <div id="small-letter" class="env-part"></div>
+            <div class="flap env-part"><div class="heart-seal">❤</div></div>
+            <div class="envelope-front env-part"></div>
+        </div>
+    </div>
+
+    <div id="fullscreen-letter-wrapper">
+        <div id="big-letter">
+            <div class="letter-content" id="letter-content"></div>
+        </div>
+        <div id="final-decision">
+            <button id="btn-yes-love" class="btn-love" onclick="acceptLove()">Dạ, em đồng ý 🥰</button>
+            <button id="btn-no-love" class="btn-love" onclick="rejectLove()">Em xin lỗi... 😥</button>
+        </div>
+    </div>
+
+    <div id="page-reject" class="page">
+        <div class="box-container">
+            <div id="reject-content"></div>
+            <a href="https://www.facebook.com/qnoah296" target="_blank" id="btn-facebook-reject" class="btn-facebook">Nhắn tin cho anh nhé</a>
+        </div>
+    </div>
+
+    <div id="page-accept" class="page">
+        <div class="box-container">
+            <div id="accept-content"></div>
+            <div id="accept-interaction" style="display: none;">
+                <textarea id="crush-reason" placeholder="Kể anh nghe điều gì làm em rung động nhé... 📝"></textarea>
+                <div class="highlight-accept">(Viết xong em nhớ chụp màn hình lại và gửi cho anh nha! 🥰)</div>
+                <a href="https://www.facebook.com/qnoah296" target="_blank" id="btn-facebook-accept" class="btn-facebook" style="display: block;">Gửi cho anh qua Facebook 💌</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGIC NHỊP TIM ---
+        let currentBPM = 85; 
+        function updateBPM(change, fixedVal = null) { 
+            let bpm = document.getElementById('bpm-display');
+            let val = fixedVal !== null ? fixedVal : parseInt(bpm.innerText) + change;
+            if(val < 60) val = 60; if(val > 180) val = 180;
+            bpm.innerText = val;
+            document.getElementById('beating-heart').style.animationDuration = `${60/val}s`;
+        }
+
+        // --- CAPTCHA ---
+        let selectedSequence = []; 
+        function toggleProfile() { document.getElementById('profile-dropdown').classList.toggle('show'); }
+        function showImageCaptcha() { if (!document.getElementById('captcha-checkbox').classList.contains('checked')) { document.getElementById('overlay').style.display = 'block'; document.getElementById('recap-modal').classList.add('active'); resetTiles(); } }
+        function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('recap-modal').classList.remove('active'); }
+        function toggleTile(element) { const errorMsg = document.getElementById('recap-error'); errorMsg.innerText = ""; const num = element.getAttribute('data-val'); if (element.classList.contains('selected')) { element.classList.remove('selected'); selectedSequence = selectedSequence.filter(n => n !== num); element.querySelector('.order-badge').remove(); recalculateBadges(); } else { if (selectedSequence.length >= 4) { errorMsg.innerText = "Chỉ cần chọn 4 số thôi!"; return; } element.classList.add('selected'); selectedSequence.push(num); let badge = document.createElement('div'); badge.className = 'order-badge'; badge.innerText = selectedSequence.length; element.appendChild(badge); } }
+        function recalculateBadges() { document.querySelectorAll('.recap-tile.selected').forEach(tile => { tile.querySelector('.order-badge').innerText = selectedSequence.indexOf(tile.getAttribute('data-val')) + 1; }); }
+        function resetTiles() { selectedSequence = []; document.getElementById('recap-error').innerText = ""; document.querySelectorAll('.recap-tile').forEach(tile => { tile.classList.remove('selected'); const badge = tile.querySelector('.order-badge'); if(badge) badge.remove(); }); }
+        function verifyImageCaptcha() { if (selectedSequence.join('') === '7153') { closeModal(); document.getElementById('captcha-checkbox').classList.add('checked'); updateBPM(5); } else { document.getElementById('recap-error').innerText = "Vui lòng thử lại."; updateBPM(-2); const modal = document.getElementById('recap-modal'); modal.style.transform = "translate(-50%, -50%) translateX(-10px)"; setTimeout(() => modal.style.transform = "translate(-50%, -50%) translateX(10px)", 100); setTimeout(() => modal.style.transform = "translate(-50%, -50%) translateX(-10px)", 200); setTimeout(() => modal.style.transform = "translate(-50%, -50%) scale(1)", 300); setTimeout(resetTiles, 500); } }
+
+        // --- LOGIN & PHÁT NHẠC XUYÊN SUỐT ---
+        function checkLogin() {
+            // ĐỂ TRUE ĐỂ DỄ TEST - NHỚ ĐỔI ĐIỀU KIỆN THỜI GIAN NHÉ
+            const isAllowedTime = true; 
+            if (!isAllowedTime) { showMainError("Chưa đến giờ hoàng đạo đâu nha! ⏰"); return; }
+            
+            const user = document.getElementById('username').value.trim().toLowerCase();
+            const pass = document.getElementById('password').value.trim();
+            const ans = document.querySelector('input[name="bunrieu"]:checked');
+            const isCaptchaChecked = document.getElementById('captcha-checkbox').classList.contains('checked');
+            
+            showMainError("");
+
+            if (user !== 'đoàn yến nhi') { showMainError("Sai tài khoản rồi! Ai đây hả?"); return; }
+            if (pass !== '21112008') { showMainError("Mật khẩu không đúng! Nhập lại đi nè."); return; }
+            if (!ans || ans.value !== 'khong') { showMainError("Sai bét! Quên mất em không thích ăn tiết à?"); return; }
+            if (!isCaptchaChecked) { showMainError("Em chưa xác minh LovveCAPTCHA kìa!"); return; }
+
+            document.getElementById('login-btn').disabled = true;
+            document.getElementById('btn-text').innerText = "Đang xử lý...";
+            updateBPM(20);
+
+            // BẬT NHẠC NỀN XUYÊN SUỐT NGAY TẠI ĐÂY
+            const bgm = document.getElementById('my-custom-bgm');
+            bgm.volume = 0.3; 
+            bgm.play().catch(e => console.log("Lỗi tự động phát nhạc"));
+
+            setTimeout(() => {
+                document.getElementById('page1').classList.remove('active');
+                document.getElementById('loading-page').classList.add('active');
+                document.getElementById('user-profile').style.display = 'flex';
+            }, 500);
+        }
+        function showMainError(msg) { const errorMsg = document.getElementById('main-error'); errorMsg.style.color = "red"; errorMsg.innerText = msg; if (msg !== "") { updateBPM(-2); const box = document.querySelector('#page1 .box'); box.style.transform = "translateX(-10px)"; setTimeout(() => box.style.transform = "translateX(10px)", 100); setTimeout(() => box.style.transform = "translateX(-10px)", 200); setTimeout(() => box.style.transform = "translateX(0)", 300); } }
+
+        const cuteSound = document.getElementById('cute-sound');
+
+        // --- XE CHẠY CHẶNG 1 (0 -> 50%) ---
+        let clickCount1 = 0; const word1 = "NHISIUCUTE";
+        function stepJourneyPhase1() {
+            if (clickCount1 >= word1.length) return; 
+            cuteSound.currentTime = 0; cuteSound.play().catch(e=>{});
+            
+            const btn = document.getElementById('start-journey-btn');
+            const container = document.getElementById('floating-container');
+            const btnRect = btn.getBoundingClientRect();
+
+            let el = document.createElement('div'); el.className = 'floating-letter'; el.innerHTML = `<span>${word1[clickCount1]}</span>`;
+            el.style.left = (btnRect.left + btnRect.width/2 - 30 + (Math.random()*60 - 30)) + 'px'; el.style.top = (btnRect.top - 30) + 'px';
+            container.appendChild(el); setTimeout(() => el.remove(), 1500); 
+
+            clickCount1++;
+            const pct = clickCount1 * 5; 
+            document.getElementById('progress-fill').style.width = pct + '%';
+            document.getElementById('mail-cart').style.left = pct + '%';
+            document.getElementById('progress-percent').innerText = pct + '%';
+            if(pct > 40) document.getElementById('progress-percent').style.color = "white"; 
+            document.getElementById('loading-text').innerText = `LOADING LOVE . . .`;
+
+            if (clickCount1 === word1.length) {
+                btn.style.display = 'none'; 
+                setTimeout(() => {
+                    document.getElementById('obstacle').innerText = '🪨'; 
+                    document.getElementById('loading-text').innerText = "Á, đụng cục đá mất tiêu! 🪨 Thôi xuống xe đi bộ tiếp vậy...";
+                    setTimeout(() => {
+                        document.getElementById('loading-page').classList.remove('active');
+                        initPage2(); 
+                    }, 2500);
+                }, 300);
+            }
+        }
+
+        // --- TRANG 2: GÕ CHỮ TRẠM 2 ---
+        const page2Texts = [
+            "Ting ting. 🪄 Chào mừng Nhi ghé vào góc nhỏ này một chút nhé.",
+            "Anh vừa nhìn đồng hồ… bây giờ đã là [TIME] rồi đó. Cũng muộn rồi ha.",
+            "Hôm nay chắc em đã cố gắng nhiều lắm. Đi học, suy nghĩ, tập trung, rồi lại lo đủ thứ.",
+            "Giờ này đáng lẽ Nhi nên nằm yên trong chăn, để cơ thể được nghỉ ngơi, để mai còn đủ tỉnh táo cho tiết Tiếng Anh nữa.",
+            "Nhưng nếu vẫn còn chút thời gian trước khi ngủ…",
+            "Cho anh mượn đúng 10 phút thôi. Không hơn.",
+            "Chỉ để ngồi cùng nhau một chút, nói vài câu nhẹ nhàng, rồi anh trả em lại cho giấc ngủ thật ngoan.",
+            "Vì dù ngày dài đến đâu, em cũng xứng đáng được nghỉ ngơi trong cảm giác yên tâm. ❤️"
+        ];
+        let p2Line = 0; let p2Char = 0; const typeSound = document.getElementById('type-sound');
+
+        function initPage2() {
+            document.getElementById('page2').classList.add('active');
+            typeSound.volume = 1.0;
+            typeWriterP2();
+        }
+        function typeWriterP2() {
+            const container = document.getElementById("typing-content");
+            if (p2Line >= page2Texts.length) return; 
+            let txt = page2Texts[p2Line];
+            if (txt.includes("[TIME]")) {
+                const now = new Date();
+                txt = txt.replace("[TIME]", `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+            }
+            if (p2Char < txt.length) {
+                container.innerHTML += txt.charAt(p2Char);
+                if(txt.charAt(p2Char - 1) !== ' ') { typeSound.currentTime = 0; typeSound.play().catch(e=>{}); }
+                let delay = 65;
+                if (['.', ','].includes(txt.charAt(p2Char - 1))) delay += 300; 
+                p2Char++;
+                setTimeout(typeWriterP2, delay); 
+            } else {
+                setTimeout(() => {
+                    p2Line++;
+                    if (p2Line < page2Texts.length) {
+                        container.innerHTML = ""; p2Char = 0; typeWriterP2();
+                    } else {
+                        document.querySelector(".typing-wrapper").style.display = "none"; 
+                        document.getElementById("final-question").style.display = "block"; 
+                        document.getElementById("button-container").style.display = "block"; 
+                    }
+                }, 3000);
+            }
+        }
+
+        // Nút né đòn trang 2
+        const btnNoP2 = document.getElementById('btn-no-p2'); let dodge1 = true;
+        btnNoP2.addEventListener("mouseenter", dodgeP2); btnNoP2.addEventListener("touchstart", dodgeP2); 
+        function dodgeP2(e) {
+            e.preventDefault(); 
+            if(dodge1) { updateBPM(-2); document.getElementById("tease-text-p2").style.display = "block"; dodge1 = false; }
+            const bw = btnNoP2.offsetWidth; const bh = btnNoP2.offsetHeight;
+            btnNoP2.style.width = bw + "px"; btnNoP2.style.height = bh + "px"; btnNoP2.style.position = "fixed";
+            btnNoP2.style.left = (Math.random() * (window.innerWidth - bw - 40) + 20) + "px";
+            btnNoP2.style.top = (Math.random() * (window.innerHeight - bh - 40) + 20) + "px";
+        }
+
+        // --- VƯỢT ĐÁ CHẶNG 2 (50 -> 100%) ---
+        function resumeJourney() {
+            document.getElementById('page2').classList.remove('active');
+            document.getElementById('loading-page').classList.add('active');
+            const obs = document.getElementById('obstacle'); const lt = document.getElementById('loading-text');
+            setTimeout(() => {
+                cuteSound.currentTime = 0; cuteSound.play().catch(e=>{});
+                obs.innerText = '✨'; lt.innerText = "Chướng ngại vật đã qua! Bấm để chạy tiếp nha! 🚀";
+                setTimeout(() => { document.getElementById('milestone-rock').style.opacity = '0'; document.getElementById('continue-journey-btn').style.display = 'block'; }, 500);
+            }, 800);
+        }
+
+        let clickCount2 = 0; const word2 = "YeuuNhithe";
+        function stepJourneyPhase2() {
+            if (clickCount2 >= word2.length) return; 
+            cuteSound.currentTime = 0; cuteSound.play().catch(e=>{});
+            const btn = document.getElementById('continue-journey-btn'); const container = document.getElementById('floating-container'); const rect = btn.getBoundingClientRect();
+            let el = document.createElement('div'); el.className = 'floating-letter'; el.innerHTML = `<span>${word2[clickCount2]}</span>`;
+            el.style.left = (rect.left + rect.width/2 - 30 + (Math.random()*60 - 30)) + 'px'; el.style.top = (rect.top - 30) + 'px';
+            container.appendChild(el); setTimeout(() => el.remove(), 1500); 
+
+            clickCount2++; const pct = 50 + (clickCount2 * 5); 
+            document.getElementById('progress-fill').style.width = pct + '%'; document.getElementById('mail-cart').style.left = pct + '%';
+            document.getElementById('progress-percent').innerText = pct + '%'; document.getElementById('loading-text').innerText = `TIẾN VỀ ĐÍCH . . .`;
+
+            if (clickCount2 === word2.length) {
+                btn.style.display = 'none'; document.getElementById('loading-text').innerText = "Tới đích rồi! Nhận thư thôi!!! 🎉";
+                setTimeout(() => { document.getElementById('loading-page').classList.remove('active'); document.getElementById('page3').classList.add('active'); updateBPM(15); }, 2000);
+            }
+        }
+
+        // --- TRANG 3: BÓC THƯ ---
+        function openLetter() {
+            const env = document.getElementById('envelope');
+            if (!env.classList.contains('open')) {
+                env.classList.add('open');
+                document.getElementById('paper-sound').play().catch(e=>{});
+                updateBPM(20); 
+                setTimeout(() => {
+                    document.getElementById('header-text-p3').classList.add('fade-out');
+                    document.querySelectorAll('.env-part').forEach(p => p.classList.add('fade-out'));
+                    document.getElementById('fullscreen-letter-wrapper').classList.add('show');
+                    setTimeout(startTypingLetter, 800);
+                }, 600);
+            }
+        }
+
+        function startTypingLetter() {
+            const box = document.getElementById('letter-content'); box.classList.add('typing-cursor');
+            const letterText = "Chắc Nhi cũng đoán được cái web này để làm gì rồi ha 😅\nAnh làm nó chỉ vì muốn nói mấy điều mà bình thường hơi ngại nói trực tiếp thôi.\n\nTừ lần đầu gặp em trên Discord, anh đã thấy em siêu dễ thương rồi. Giọng em nghe nhẹ nhẹ mà cuốn lắm, kiểu nói chuyện xong tự nhiên thấy ngày hôm đó vui hơn hẳn.\n\nCàng chơi chung, học chung, tâm sự nhiều hơn… anh mới nhận ra mình thích em thật rồi. Không phải kiểu cảm nắng nhất thời đâu, mà là càng tiếp xúc càng thấy hợp, càng muốn nói chuyện với em nhiều hơn.\n\nCòn nếu em hỏi anh có gì để em cân nhắc á… thì chắc là:\n- Anh là người có trách nhiệm, đã hứa là sẽ cố gắng làm cho bằng được.\n- Anh thuộc hệ chung thủy, thích ai là nghiêm túc với người đó.\n- Anh hiền thiệt, và chắc là hơi đáng yêu mỗi khi ở cạnh em 😌\n- Anh không hứa nuôi em thành “cô bé mũm mĩm” đâu, nhưng anh hứa sẽ chăm em theo cách làm em vui và thấy mình được quan tâm mỗi ngày.\n\nCuối cùng, anh không muốn tạo áp lực gì cho em hết.\nAnh chỉ muốn nói một điều đơn giản thôi — Anh thích em.\nCòn lại, anh luôn tôn trọng cảm xúc của em. ❤️";
+            let i = 0;
+            function typeWriter() {
+                if (i < letterText.length) {
+                    let char = letterText.charAt(i); let delay = Math.random() * 40 + 30; 
+                    if(char === '\n') { box.innerHTML += "<br>"; delay = 400; } 
+                    else { box.innerHTML += char; if(char !== ' ') { typeSound.currentTime = 0; typeSound.volume = 0.5; typeSound.play().catch(e=>{}); } }
+                    if (['.', '…', '!', ':'].includes(char)) delay = 500; else if (char === ',') delay = 300;
+                    i++;
+                    const bigL = document.getElementById('big-letter'); bigL.scrollTop = bigL.scrollHeight;
+                    setTimeout(typeWriter, delay); 
+                } else {
+                    box.classList.remove('typing-cursor'); updateBPM(30); 
+                    setTimeout(() => {
+                        const bigL = document.getElementById('big-letter'); bigL.scrollTop = bigL.scrollHeight + 150;
+                        document.getElementById('final-decision').style.display = 'flex';
+                    }, 1000);
+                }
+            }
+            typeWriter();
+        }
+
+        // --- KẾT CỤC ---
+        function rejectLove() {
+            updateBPM(0, 70); 
+            document.getElementById('heart-monitor').classList.add('sad'); document.body.style.backgroundColor = "#f1f2f6"; 
+            document.getElementById('fullscreen-letter-wrapper').classList.remove('show'); document.getElementById('final-decision').style.display = 'none';
+            setTimeout(() => {
+                document.getElementById('fullscreen-letter-wrapper').style.display = 'none'; document.getElementById('page3').classList.remove('active');
+                document.getElementById('page-reject').classList.add('active'); startTypingReject();
+            }, 600);
+        }
+
+        function startTypingReject() {
+            const rBox = document.getElementById('reject-content'); rBox.classList.add('typing-cursor');
+            const rText = "Anh cảm ơn Nhi vì đã thành thật với anh nhé. Thật ra để làm trang web này và nói ra những điều này, anh cũng đã suy nghĩ khá nhiều.\n\nNên khi nhận được câu trả lời của em, dù có chạnh lòng một chút, anh vẫn thật sự trân trọng sự rõ ràng đó. Anh không trách em đâu, vì tình cảm vốn dĩ không thể ép buộc.\n\nÍt nhất anh đã đủ can đảm để nói ra, và anh chưa bao giờ hối hận vì điều đó. Anh xem nó như một phần cảm xúc rất đẹp mà anh may mắn có được.\n\nAnh mong sau này, dù người đi bên cạnh em là ai, thì người đó sẽ thật sự thấu hiểu, trân trọng và yêu thương em theo cách mà em xứng đáng.\n\nCòn anh sẽ cất giữ lại những kỷ niệm của chúng ta như một điều dễ thương nhất trong thanh xuân của mình. Cảm ơn Nhi vì đã xuất hiện và cho anh biết cảm giác thích một người nhiều đến vậy là như thế nào. 🌻\n\n<span class='highlight-fb'>(Em hãy chụp màn hình trang này và gửi qua Facebook cho anh để mình khép lại chuyện này một cách trọn vẹn nhé!)</span>";
+            let i = 0; let isTag = false; let tBuf = "";
+            function typeRWriter() {
+                if (i < rText.length) {
+                    let char = rText.charAt(i); let delay = 40; 
+                    if (char === '<') isTag = true;
+                    if (isTag) { tBuf += char; if (char === '>') { isTag = false; rBox.innerHTML += tBuf; tBuf = ""; } } 
+                    else {
+                        if(char === '\n') { rBox.innerHTML += "<br>"; delay = 600; } else { rBox.innerHTML += char; }
+                        if (char === '.' || char === ',') delay = 300;
+                    }
+                    i++; setTimeout(typeRWriter, delay); 
+                } else { rBox.classList.remove('typing-cursor'); document.getElementById('btn-facebook-reject').style.display = 'block'; }
+            }
+            setTimeout(typeRWriter, 800);
+        }
+
+        function acceptLove() {
+            updateBPM(0, 131); 
+            document.getElementById('fullscreen-letter-wrapper').classList.remove('show'); document.getElementById('final-decision').style.display = 'none';
+            setInterval(createHeartFirework, 250);
+            setTimeout(() => {
+                document.getElementById('fullscreen-letter-wrapper').style.display = 'none'; document.getElementById('page3').classList.remove('active');
+                document.getElementById('page-accept').classList.add('active'); startTypingAccept();
+            }, 600);
+        }
+
+        function startTypingAccept() {
+            const aBox = document.getElementById('accept-content'); aBox.classList.add('typing-cursor');
+            const aText = "Theo số liệu vừa được ghi nhận, nhịp tim anh hiện tại là 131,4 kể từ lúc em nói đồng ý.\n\nNgười ta bảo tim đập nhanh là do vận động mạnh… mà anh thì chỉ đang đứng đây nhìn em cười thôi.\n\nVậy chắc khoa học cũng phải công nhận là anh thích em thật rồi.\n\nNhưng mà… cho anh tò mò một chút nha. Trong cái ‘thí nghiệm’ này, anh đã làm điều gì khiến em rung động vậy?\n\nAnh hỏi không phải để kiểm tra đâu, chỉ là anh muốn hiểu điều gì ở mình đã khiến em mở lòng — để anh biết trân trọng và giữ nó thật lâu. ❤️";
+            let i = 0;
+            function typeAWriter() {
+                if (i < aText.length) {
+                    let char = aText.charAt(i); let delay = 40; 
+                    if(char === '\n') { aBox.innerHTML += "<br>"; delay = 400; } 
+                    else { aBox.innerHTML += char; if(char !== ' ') { typeSound.currentTime = 0; typeSound.volume = 0.5; typeSound.play().catch(e=>{}); } }
+                    if (['.', '…', '?'].includes(char)) delay = 500; else if (char === ',') delay = 300;
+                    i++; setTimeout(typeAWriter, delay); 
+                } else {
+                    aBox.classList.remove('typing-cursor'); 
+                    document.getElementById('accept-interaction').style.display = 'block';
+                }
+            }
+            setTimeout(typeAWriter, 800);
+        }
+
+        function createHeartFirework() {
+            const heart = document.createElement('div'); heart.className = 'heart-firework';
+            heart.innerText = ['❤️', '💖', '💞', '🥰', '✨'][Math.floor(Math.random() * 5)];
+            heart.style.left = Math.random() * 100 + 'vw'; heart.style.bottom = '-50px';
+            document.body.appendChild(heart); setTimeout(() => heart.remove(), 2000);
+        }
+    </script>
+</body>
+</html>
